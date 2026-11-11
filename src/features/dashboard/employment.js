@@ -23,8 +23,17 @@ export function getEmploymentSummary(students = []) {
   const total = students.length;
   // 프로젝트의 산정 기준: 군입대자와 진학자는 분모에서 제외하고, 미분류 값은 취업자로 추정하지 않습니다.
   const excludedStatuses = ['군입대자', '진학자'];
-  const excluded = students.filter(student => excludedStatuses.includes(String(student.status || '').trim())).length;
+  const excluded = students.filter(student =>
+    excludedStatuses.includes(String(student.status || '').trim()),
+  ).length;
   const eligible = total - excluded;
   const employed = counts.find(item => item.label === '취업자').count;
-  return { counts, total, excluded, eligible, employed, rate: eligible ? employed / eligible * 100 : null };
+  return {
+    counts,
+    total,
+    excluded,
+    eligible,
+    employed,
+    rate: eligible ? (employed / eligible) * 100 : null,
+  };
 }

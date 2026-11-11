@@ -22,13 +22,53 @@ function makeHarness() {
   ];
   const yearly = new Sheet('2025');
   yearly.rows = [
-    ['graduationYear', 'studentId', 'name', 'gender', 'phone', 'address', 'status', 'company', 'field', 'detail', 'gpa', 'updatedAt'],
+    [
+      'graduationYear',
+      'studentId',
+      'name',
+      'gender',
+      'phone',
+      'address',
+      'status',
+      'company',
+      'field',
+      'detail',
+      'gpa',
+      'updatedAt',
+    ],
     ['2025', 'S001', 'Kim', 'F', '010-0000', 'Seoul', '취업자', 'Example Co', 'Web', '', '3.8', ''],
   ];
   sheets.set(users.name, users);
   sheets.set(yearly.name, yearly);
   const current = new Sheet('재학생');
-  current.rows = [['student_id', 'name', 'birth_date', 'gender', 'phone', 'email', 'affiliation', 'enrollment_status', 'notes', 'created_at', 'updated_at'], ['C001', 'Current Student', '2004-01-02', 'F', '010-1111', 'current@example.com', '학과', '재학', '', 'Wed Oct 07 2026 11:08:05 GMT+0900 (韓國標準時間)', 'Wed Oct 07 2026 11:08:05 GMT+0900 (韓國標準時間)']];
+  current.rows = [
+    [
+      'student_id',
+      'name',
+      'birth_date',
+      'gender',
+      'phone',
+      'email',
+      'affiliation',
+      'enrollment_status',
+      'notes',
+      'created_at',
+      'updated_at',
+    ],
+    [
+      'C001',
+      'Current Student',
+      '2004-01-02',
+      'F',
+      '010-1111',
+      'current@example.com',
+      '학과',
+      '재학',
+      '',
+      'Wed Oct 07 2026 11:08:05 GMT+0900 (韓國標準時間)',
+      'Wed Oct 07 2026 11:08:05 GMT+0900 (韓國標準時間)',
+    ],
+  ];
   sheets.set(current.name, current);
 
   const cache = {
@@ -39,48 +79,105 @@ function makeHarness() {
   const workbook = {
     sheets,
     getSheetByName: name => sheets.get(name) || null,
-    insertSheet: name => { const sheet = new Sheet(name); sheets.set(name, sheet); return sheet; },
-    renameSheet: (oldName, newName, sheet) => { sheets.delete(oldName); sheets.set(newName, sheet); },
+    insertSheet: name => {
+      const sheet = new Sheet(name);
+      sheets.set(name, sheet);
+      return sheet;
+    },
+    renameSheet: (oldName, newName, sheet) => {
+      sheets.delete(oldName);
+      sheets.set(newName, sheet);
+    },
     getSheets: () => [...sheets.values()],
   };
-  const bytes = value => [...value].map(byte => byte > 127 ? byte - 256 : byte);
+  const bytes = value => [...value].map(byte => (byte > 127 ? byte - 256 : byte));
   const Utilities = {
-    DigestAlgorithm: { SHA_256: 'sha256' }, Charset: { UTF_8: 'utf8' },
-    computeDigest: (_algorithm, value) => bytes(crypto.createHash('sha256').update(value, 'utf8').digest()),
+    DigestAlgorithm: { SHA_256: 'sha256' },
+    Charset: { UTF_8: 'utf8' },
+    computeDigest: (_algorithm, value) =>
+      bytes(crypto.createHash('sha256').update(value, 'utf8').digest()),
     computeHmacSha256Signature: (value, key) => {
-      const valueBuffer = Array.isArray(value) ? Buffer.from(value.map(byte => byte & 255)) : Buffer.from(value, 'utf8');
-      const keyBuffer = Array.isArray(key) ? Buffer.from(key.map(byte => byte & 255)) : Buffer.from(key, 'utf8');
+      const valueBuffer = Array.isArray(value)
+        ? Buffer.from(value.map(byte => byte & 255))
+        : Buffer.from(value, 'utf8');
+      const keyBuffer = Array.isArray(key)
+        ? Buffer.from(key.map(byte => byte & 255))
+        : Buffer.from(key, 'utf8');
       return bytes(crypto.createHmac('sha256', keyBuffer).update(valueBuffer).digest());
     },
     getUuid: () => crypto.randomUUID(),
     formatDate: (value, timezone, pattern) => {
       if (pattern === 'yyyy') return currentYear;
       const date = new Date(value);
-      const parts = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
-        timeZone: timezone || 'UTC', year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
-      }).formatToParts(date).map(part => [part.type, part.value]));
-      const weekday = new Intl.DateTimeFormat('en-US', { timeZone: timezone || 'UTC', weekday: 'short' }).format(date);
-      const isoWeekday = ({ Mon: '1', Tue: '2', Wed: '3', Thu: '4', Fri: '5', Sat: '6', Sun: '7' })[weekday];
-      return pattern.replace('yyyy', parts.year).replace('MM', parts.month).replace('dd', parts.day)
-        .replace('HH', parts.hour).replace('mm', parts.minute).replace('ss', parts.second).replace('u', isoWeekday);
+      const parts = Object.fromEntries(
+        new Intl.DateTimeFormat('en-CA', {
+          timeZone: timezone || 'UTC',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hourCycle: 'h23',
+        })
+          .formatToParts(date)
+          .map(part => [part.type, part.value]),
+      );
+      const weekday = new Intl.DateTimeFormat('en-US', {
+        timeZone: timezone || 'UTC',
+        weekday: 'short',
+      }).format(date);
+      const isoWeekday = { Mon: '1', Tue: '2', Wed: '3', Thu: '4', Fri: '5', Sat: '6', Sun: '7' }[
+        weekday
+      ];
+      return pattern
+        .replace('yyyy', parts.year)
+        .replace('MM', parts.month)
+        .replace('dd', parts.day)
+        .replace('HH', parts.hour)
+        .replace('mm', parts.minute)
+        .replace('ss', parts.second)
+        .replace('u', isoWeekday);
     },
     parseDate: (value, timezone = 'UTC') => {
       const text = String(value).replaceAll('.', '-').replace(' ', 'T');
       if (/^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2})?)?$/.test(text)) {
-        const local = text.length === 10 ? `${text}T00:00:00` : text.length === 16 ? `${text}:00` : text;
+        const local =
+          text.length === 10 ? `${text}T00:00:00` : text.length === 16 ? `${text}:00` : text;
         return new Date(`${local}${timezone === 'Asia/Seoul' ? '+09:00' : 'Z'}`);
       }
       return new Date(text.endsWith('Z') ? text : `${text}Z`);
     },
   };
   const context = vm.createContext({
-    PropertiesService: { getScriptProperties: () => ({ getProperty: key => ({ SPREADSHEET_ID: 'test-sheet', GOOGLE_CLIENT_ID: 'test-client' })[key] || null }) },
+    PropertiesService: {
+      getScriptProperties: () => ({
+        getProperty: key =>
+          ({ SPREADSHEET_ID: 'test-sheet', GOOGLE_CLIENT_ID: 'test-client' })[key] || null,
+      }),
+    },
     SpreadsheetApp: { openById: () => workbook, getScriptTimeZone: () => 'UTC' },
-    CacheService: { getScriptCache: () => cache }, LockService: { getScriptLock: () => ({ tryLock: () => true, waitLock() {}, releaseLock() {} }) }, Utilities,
+    CacheService: { getScriptCache: () => cache },
+    LockService: {
+      getScriptLock: () => ({ tryLock: () => true, waitLock() {}, releaseLock() {} }),
+    },
+    Utilities,
     Session: { getScriptTimeZone: () => 'UTC' },
-    UrlFetchApp: { fetch: () => ({ getResponseCode: () => 200, getContentText: () => JSON.stringify(googleProfile) }) },
-    ContentService: { createTextOutput: text => ({ text, setMimeType() { return this; } }), MimeType: { JSON: 'application/json' } },
+    UrlFetchApp: {
+      fetch: () => ({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify(googleProfile),
+      }),
+    },
+    ContentService: {
+      createTextOutput: text => ({
+        text,
+        setMimeType() {
+          return this;
+        },
+      }),
+      MimeType: { JSON: 'application/json' },
+    },
     Logger: { log() {} },
   });
   const source = fs.readFileSync(path.join(root, 'apps-script', 'Code.gs'), 'utf8');
@@ -93,15 +190,29 @@ function makeHarness() {
     userRows: users.rows,
     sheets,
     clearCache: () => cacheValues.clear(),
-    setGoogleProfile: profile => { googleProfile = profile; },
-    setCurrentYear: year => { currentYear = String(year); },
+    setGoogleProfile: profile => {
+      googleProfile = profile;
+    },
+    setCurrentYear: year => {
+      currentYear = String(year);
+    },
   };
 }
 
 class Sheet {
-  constructor(name) { this.name = name; this.rows = []; }
-  getName() { return this.name; }
-  setName(name) { const oldName = this.name; this.name = name; this.renameFn?.(oldName, name, this); return this; }
+  constructor(name) {
+    this.name = name;
+    this.rows = [];
+  }
+  getName() {
+    return this.name;
+  }
+  setName(name) {
+    const oldName = this.name;
+    this.name = name;
+    this.renameFn?.(oldName, name, this);
+    return this;
+  }
   copyTo(book) {
     let name = `Copy of ${this.name}`;
     let suffix = 1;
@@ -112,18 +223,36 @@ class Sheet {
     book.sheets.set(name, copy);
     return copy;
   }
-  clearContents() { this.rows = []; }
-  getLastRow() { return this.rows.length; }
-  getDataRange() { return { getValues: () => this.rows.map(row => [...row]) }; }
+  clearContents() {
+    this.rows = [];
+  }
+  getLastRow() {
+    return this.rows.length;
+  }
+  getDataRange() {
+    return { getValues: () => this.rows.map(row => [...row]) };
+  }
   getRange(row, column, rowCount = 1, columnCount = 1) {
     return {
-      getValues: () => Array.from({ length: rowCount }, (_, ri) => Array.from({ length: columnCount }, (_, ci) => this.rows[row - 1 + ri]?.[column - 1 + ci] ?? '')),
-      getDisplayValues: () => Array.from({ length: rowCount }, (_, ri) => Array.from({ length: columnCount }, (_, ci) => String(this.rows[row - 1 + ri]?.[column - 1 + ci] ?? ''))),
-      setValues: values => values.forEach((line, ri) => {
-        const targetRow = row - 1 + ri;
-        while (this.rows.length <= targetRow) this.rows.push([]);
-        for (let ci = 0; ci < line.length; ci++) this.rows[targetRow][column - 1 + ci] = line[ci];
-      }),
+      getValues: () =>
+        Array.from({ length: rowCount }, (_, ri) =>
+          Array.from(
+            { length: columnCount },
+            (_, ci) => this.rows[row - 1 + ri]?.[column - 1 + ci] ?? '',
+          ),
+        ),
+      getDisplayValues: () =>
+        Array.from({ length: rowCount }, (_, ri) =>
+          Array.from({ length: columnCount }, (_, ci) =>
+            String(this.rows[row - 1 + ri]?.[column - 1 + ci] ?? ''),
+          ),
+        ),
+      setValues: values =>
+        values.forEach((line, ri) => {
+          const targetRow = row - 1 + ri;
+          while (this.rows.length <= targetRow) this.rows.push([]);
+          for (let ci = 0; ci < line.length; ci++) this.rows[targetRow][column - 1 + ci] = line[ci];
+        }),
       setValue: value => {
         const targetRow = row - 1;
         while (this.rows.length <= targetRow) this.rows.push([]);
@@ -131,15 +260,24 @@ class Sheet {
       },
     };
   }
-  appendRow(row) { if (this.failAppend) throw new Error('mock append failure'); this.rows.push([...row]); }
-  deleteRow(row) { this.rows.splice(row - 1, 1); }
+  appendRow(row) {
+    if (this.failAppend) throw new Error('mock append failure');
+    this.rows.push([...row]);
+  }
+  deleteRow(row) {
+    this.rows.splice(row - 1, 1);
+  }
 }
 
 test('Apps Script API authentication, roles, student lifecycle, statistics, logs and sessions', async t => {
   const app = makeHarness();
   const adminLogin = app.call({ action: 'googleLogin', accessToken: 'mock-token' });
   assert.equal(adminLogin.ok, true, adminLogin.error || 'admin login succeeds');
-  assert.equal('authVersion' in adminLogin.user, false, 'internal session version is not returned to the browser');
+  assert.equal(
+    'authVersion' in adminLogin.user,
+    false,
+    'internal session version is not returned to the browser',
+  );
   const adminToken = adminLogin.token;
 
   await t.test('requires a valid session and restricts admin-only actions', () => {
@@ -155,105 +293,369 @@ test('Apps Script API authentication, roles, student lifecycle, statistics, logs
   await t.test('accepts only verified Google profiles for the configured OAuth client', () => {
     app.setGoogleProfile({ email: 'admin@example.com', email_verified: false, aud: 'test-client' });
     assert.equal(app.call({ action: 'googleLogin', accessToken: 'mock-token' }).ok, false);
-    app.setGoogleProfile({ email: 'admin@example.com', email_verified: true, aud: 'different-client' });
+    app.setGoogleProfile({
+      email: 'admin@example.com',
+      email_verified: true,
+      aud: 'different-client',
+    });
     assert.equal(app.call({ action: 'googleLogin', accessToken: 'mock-token' }).ok, false);
     app.setGoogleProfile({ email: 'admin@example.com', email_verified: true, aud: 'test-client' });
     assert.equal(app.call({ action: 'googleLogin', accessToken: 'mock-token' }).ok, true);
   });
 
-  await t.test('protects current student reads, writes and counseling for administrators only', () => {
-    app.setGoogleProfile({ email: 'legacy@example.com', email_verified: true, aud: 'test-client' });
-    const userLogin = app.call({ action: 'googleLogin', accessToken: 'mock-token' });
-    assert.equal(app.call({ action: 'currentStudents', token: userLogin.token }).ok, false);
-    assert.equal(app.call({ action: 'saveCurrentStudent', token: userLogin.token, create: true, student: { student_id: 'C002', name: 'Blocked' } }).ok, false);
-    assert.equal(app.call({ action: 'currentCounselings', token: userLogin.token, studentId: 'C001' }).ok, false);
-    assert.equal(app.call({ action: 'saveCurrentCounseling', token: userLogin.token, studentId: 'C001', counseling: { counseledAt: '2026-01-01T00:00', content: 'blocked' } }).ok, false);
-    app.setGoogleProfile({ email: 'admin@example.com', email_verified: true, aud: 'test-client' });
-    const adminLogin = app.call({ action: 'googleLogin', accessToken: 'mock-token' });
-    const result = app.call({ action: 'currentStudents', token: adminLogin.token });
-    assert.equal(result.ok, true);
-    assert.equal(result.students[0].student_id, 'C001');
-    const updated = app.call({ action: 'saveCurrentStudent', token: adminLogin.token, student: { ...result.students[0], affiliation: '학과 2' } });
-    assert.equal(updated.ok, true);
-    assert.equal(updated.student.affiliation, '학과 2');
-    assert.equal(app.call({ action: 'login', userId: 'admin', password: 'strong-admin-password' }).ok, false);
-  });
+  await t.test(
+    'protects current student reads, writes and counseling for administrators only',
+    () => {
+      app.setGoogleProfile({
+        email: 'legacy@example.com',
+        email_verified: true,
+        aud: 'test-client',
+      });
+      const userLogin = app.call({ action: 'googleLogin', accessToken: 'mock-token' });
+      assert.equal(app.call({ action: 'currentStudents', token: userLogin.token }).ok, false);
+      assert.equal(
+        app.call({
+          action: 'saveCurrentStudent',
+          token: userLogin.token,
+          create: true,
+          student: { student_id: 'C002', name: 'Blocked' },
+        }).ok,
+        false,
+      );
+      assert.equal(
+        app.call({ action: 'currentCounselings', token: userLogin.token, studentId: 'C001' }).ok,
+        false,
+      );
+      assert.equal(
+        app.call({
+          action: 'saveCurrentCounseling',
+          token: userLogin.token,
+          studentId: 'C001',
+          counseling: { counseledAt: '2026-01-01T00:00', content: 'blocked' },
+        }).ok,
+        false,
+      );
+      app.setGoogleProfile({
+        email: 'admin@example.com',
+        email_verified: true,
+        aud: 'test-client',
+      });
+      const adminLogin = app.call({ action: 'googleLogin', accessToken: 'mock-token' });
+      const result = app.call({ action: 'currentStudents', token: adminLogin.token });
+      assert.equal(result.ok, true);
+      assert.equal(result.students[0].student_id, 'C001');
+      const updated = app.call({
+        action: 'saveCurrentStudent',
+        token: adminLogin.token,
+        student: { ...result.students[0], affiliation: '학과 2' },
+      });
+      assert.equal(updated.ok, true);
+      assert.equal(updated.student.affiliation, '학과 2');
+      assert.equal(
+        app.call({ action: 'login', userId: 'admin', password: 'strong-admin-password' }).ok,
+        false,
+      );
+    },
+  );
 
-  await t.test('transfers a current student and counseling to an existing graduate year only for admins', () => {
-    const graduate2026 = new Sheet('2026');
-    graduate2026.rows = [['graduationYear', 'studentId', 'name', 'gender', 'phone', 'address', 'status', 'company', 'field', 'detail', 'gpa', 'updatedAt']];
-    app.sheets.set('2026', graduate2026);
-    const currentCounselings = new Sheet('counselings');
-    currentCounselings.rows = [
-      ['counselingId', 'graduationYear', 'studentId', 'studentName', 'counseledAt', 'content', 'authorUserId', 'authorName', 'createdAt', 'updatedAt'],
-      ['c-1', '재학생', 'C001', 'Current Student', '2026-02-01T00:00', '상담 기록 보존 확인', 'admin', 'Admin User', '2026-02-01', '2026-02-01'],
-    ];
-    app.sheets.set(currentCounselings.name, currentCounselings);
-    app.setGoogleProfile({ email: 'legacy@example.com', email_verified: true, aud: 'test-client' });
-    const userLogin = app.call({ action: 'googleLogin', accessToken: 'mock-token' });
-    assert.equal(app.call({ action: 'transferCurrentStudent', token: userLogin.token, studentId: 'C001', graduationYear: '2026', status: '미취업자' }).ok, false, 'server enforces administrator role');
-    app.setGoogleProfile({ email: 'admin@example.com', email_verified: true, aud: 'test-client' });
-    const result = app.call({ action: 'transferCurrentStudent', token: adminToken, studentId: 'C001', graduationYear: '2026', status: '미취업자' });
-    assert.equal(result.ok, true, result.error);
-    assert.equal(app.call({ action: 'currentStudents', token: adminToken }).students.some(student => student.student_id === 'C001'), false);
-    const graduate = app.call({ action: 'students', token: adminToken, year: '2026' }).students.find(student => student.studentId === 'C001');
-    assert.equal(graduate.status, '미취업자');
-    assert.match(graduate.detail, /이메일: current@example\.com/);
-    assert.match(graduate.detail, /생년월일: 2004\.01\.02\(금\)/);
-    assert.match(graduate.detail, /재학생 최초 등록일: 2026\.10\.07\(수\) 11:08:05/);
-    assert.match(graduate.detail, /재학생 졸업 전환일: \d{4}\.\d{2}\.\d{2}\([월화수목금토일]\) \d{2}:\d{2}:\d{2}/);
-    assert.doesNotMatch(graduate.detail, /재학생 최종 수정일/);
-    assert.equal(currentCounselings.rows[1][1], '2026');
-    assert.equal(app.call({ action: 'counselings', token: adminToken, year: '2026', studentId: 'C001' }).counselings[0].content, '상담 기록 보존 확인');
-    assert.equal(app.call({ action: 'transferCurrentStudent', token: adminToken, studentId: 'C001', graduationYear: '2026', status: '미취업자' }).alreadyCompleted, true, 'a repeated transfer request is idempotent');
+  await t.test(
+    'transfers a current student and counseling to an existing graduate year only for admins',
+    () => {
+      const graduate2026 = new Sheet('2026');
+      graduate2026.rows = [
+        [
+          'graduationYear',
+          'studentId',
+          'name',
+          'gender',
+          'phone',
+          'address',
+          'status',
+          'company',
+          'field',
+          'detail',
+          'gpa',
+          'updatedAt',
+        ],
+      ];
+      app.sheets.set('2026', graduate2026);
+      const currentCounselings = new Sheet('counselings');
+      currentCounselings.rows = [
+        [
+          'counselingId',
+          'graduationYear',
+          'studentId',
+          'studentName',
+          'counseledAt',
+          'content',
+          'authorUserId',
+          'authorName',
+          'createdAt',
+          'updatedAt',
+        ],
+        [
+          'c-1',
+          '재학생',
+          'C001',
+          'Current Student',
+          '2026-02-01T00:00',
+          '상담 기록 보존 확인',
+          'admin',
+          'Admin User',
+          '2026-02-01',
+          '2026-02-01',
+        ],
+      ];
+      app.sheets.set(currentCounselings.name, currentCounselings);
+      app.setGoogleProfile({
+        email: 'legacy@example.com',
+        email_verified: true,
+        aud: 'test-client',
+      });
+      const userLogin = app.call({ action: 'googleLogin', accessToken: 'mock-token' });
+      assert.equal(
+        app.call({
+          action: 'transferCurrentStudent',
+          token: userLogin.token,
+          studentId: 'C001',
+          graduationYear: '2026',
+          status: '미취업자',
+        }).ok,
+        false,
+        'server enforces administrator role',
+      );
+      app.setGoogleProfile({
+        email: 'admin@example.com',
+        email_verified: true,
+        aud: 'test-client',
+      });
+      const result = app.call({
+        action: 'transferCurrentStudent',
+        token: adminToken,
+        studentId: 'C001',
+        graduationYear: '2026',
+        status: '미취업자',
+      });
+      assert.equal(result.ok, true, result.error);
+      assert.equal(
+        app
+          .call({ action: 'currentStudents', token: adminToken })
+          .students.some(student => student.student_id === 'C001'),
+        false,
+      );
+      const graduate = app
+        .call({ action: 'students', token: adminToken, year: '2026' })
+        .students.find(student => student.studentId === 'C001');
+      assert.equal(graduate.status, '미취업자');
+      assert.match(graduate.detail, /이메일: current@example\.com/);
+      assert.match(graduate.detail, /생년월일: 2004\.01\.02\(금\)/);
+      assert.match(graduate.detail, /재학생 최초 등록일: 2026\.10\.07\(수\) 11:08:05/);
+      assert.match(
+        graduate.detail,
+        /재학생 졸업 전환일: \d{4}\.\d{2}\.\d{2}\([월화수목금토일]\) \d{2}:\d{2}:\d{2}/,
+      );
+      assert.doesNotMatch(graduate.detail, /재학생 최종 수정일/);
+      assert.equal(currentCounselings.rows[1][1], '2026');
+      assert.equal(
+        app.call({ action: 'counselings', token: adminToken, year: '2026', studentId: 'C001' })
+          .counselings[0].content,
+        '상담 기록 보존 확인',
+      );
+      assert.equal(
+        app.call({
+          action: 'transferCurrentStudent',
+          token: adminToken,
+          studentId: 'C001',
+          graduationYear: '2026',
+          status: '미취업자',
+        }).alreadyCompleted,
+        true,
+        'a repeated transfer request is idempotent',
+      );
 
-    assert.equal(app.call({ action: 'saveCurrentStudent', token: adminToken, create: true, student: { student_id: 'C002', name: 'Retry Student', email: 'retry@example.com' } }).ok, true);
-    const target = app.sheets.get('2026');
-    target.failAppend = true;
-    const failed = app.call({ action: 'transferCurrentStudent', token: adminToken, studentId: 'C002', graduationYear: '2026', status: '취업자' });
-    target.failAppend = false;
-    assert.equal(failed.ok, false);
-    const transferSheet = app.sheets.get('student_transfers');
-    const firstAttemptTime = transferSheet.rows.find(row => row[1] === 'C002')[4];
-    assert.equal(app.call({ action: 'currentStudents', token: adminToken }).students.some(student => student.student_id === 'C002'), true, 'source row survives an append failure');
-    assert.equal(app.call({ action: 'transferCurrentStudent', token: adminToken, studentId: 'C002', graduationYear: '2026', status: '취업자' }).ok, true, 'the rolled back transfer can be retried');
-    const retriedDetail = app.call({ action: 'students', token: adminToken, year: '2026' }).students.find(student => student.studentId === 'C002').detail;
-    const expectedDate = `재학생 졸업 전환일: ${formatKoreanDateTime(firstAttemptTime)}`;
-    assert.ok(retriedDetail.includes(expectedDate), 'retry preserves the timestamp first written to the transfer ledger');
+      assert.equal(
+        app.call({
+          action: 'saveCurrentStudent',
+          token: adminToken,
+          create: true,
+          student: { student_id: 'C002', name: 'Retry Student', email: 'retry@example.com' },
+        }).ok,
+        true,
+      );
+      const target = app.sheets.get('2026');
+      target.failAppend = true;
+      const failed = app.call({
+        action: 'transferCurrentStudent',
+        token: adminToken,
+        studentId: 'C002',
+        graduationYear: '2026',
+        status: '취업자',
+      });
+      target.failAppend = false;
+      assert.equal(failed.ok, false);
+      const transferSheet = app.sheets.get('student_transfers');
+      const firstAttemptTime = transferSheet.rows.find(row => row[1] === 'C002')[4];
+      assert.equal(
+        app
+          .call({ action: 'currentStudents', token: adminToken })
+          .students.some(student => student.student_id === 'C002'),
+        true,
+        'source row survives an append failure',
+      );
+      assert.equal(
+        app.call({
+          action: 'transferCurrentStudent',
+          token: adminToken,
+          studentId: 'C002',
+          graduationYear: '2026',
+          status: '취업자',
+        }).ok,
+        true,
+        'the rolled back transfer can be retried',
+      );
+      const retriedDetail = app
+        .call({ action: 'students', token: adminToken, year: '2026' })
+        .students.find(student => student.studentId === 'C002').detail;
+      const expectedDate = `재학생 졸업 전환일: ${formatKoreanDateTime(firstAttemptTime)}`;
+      assert.ok(
+        retriedDetail.includes(expectedDate),
+        'retry preserves the timestamp first written to the transfer ledger',
+      );
 
-    assert.equal(app.call({ action: 'saveCurrentStudent', token: adminToken, create: true, student: { student_id: 'C003', name: 'Duplicate Student' } }).ok, true);
-    target.appendRow(['2026', 'C003', 'Different Student', '', '', '', '기타', '', '', '', '', '']);
-    assert.equal(app.call({ action: 'transferCurrentStudent', token: adminToken, studentId: 'C003', graduationYear: '2026', status: '기타' }).ok, false, 'an existing graduate ID is not overwritten');
-    assert.equal(app.call({ action: 'currentStudents', token: adminToken }).students.some(student => student.student_id === 'C003'), true);
-  });
+      assert.equal(
+        app.call({
+          action: 'saveCurrentStudent',
+          token: adminToken,
+          create: true,
+          student: { student_id: 'C003', name: 'Duplicate Student' },
+        }).ok,
+        true,
+      );
+      target.appendRow([
+        '2026',
+        'C003',
+        'Different Student',
+        '',
+        '',
+        '',
+        '기타',
+        '',
+        '',
+        '',
+        '',
+        '',
+      ]);
+      assert.equal(
+        app.call({
+          action: 'transferCurrentStudent',
+          token: adminToken,
+          studentId: 'C003',
+          graduationYear: '2026',
+          status: '기타',
+        }).ok,
+        false,
+        'an existing graduate ID is not overwritten',
+      );
+      assert.equal(
+        app
+          .call({ action: 'currentStudents', token: adminToken })
+          .students.some(student => student.student_id === 'C003'),
+        true,
+      );
+    },
+  );
 
-  await t.test('uses the server current year, forces unemployment status, and rejects cross-year duplicates', () => {
-    const reordered = new Sheet('2027');
-    reordered.rows = [['name', 'status', 'studentId', 'graduationYear', 'detail', 'phone', 'gender'], ['Existing', '기타', 'S900', '2027', '', '', '']];
-    app.sheets.set('2027', reordered);
-    assert.equal(app.call({ action: 'saveCurrentStudent', token: adminToken, create: true, student: { student_id: 'C010', name: 'Header Mapped', gender: 'F', phone: '010-0100' } }).ok, true);
-    const transferred = app.call({ action: 'transferCurrentStudent', token: adminToken, studentId: 'C010', graduationYear: '2027', status: '진학자' });
-    assert.equal(transferred.ok, true, transferred.error);
-    const read = app.call({ action: 'students', token: adminToken, year: '2026' });
-    const transferredStudent = read.students.find(student => student.studentId === 'C010');
-    assert.equal(transferredStudent.name, 'Header Mapped');
-    assert.equal(transferredStudent.status, '미취업자');
-    assert.equal(transferredStudent.phone, '010-0100');
-    assert.equal(transferredStudent.gender, 'F');
-    assert.equal(reordered.rows.length, 2, 'client-supplied year sheet remains unchanged');
+  await t.test(
+    'uses the server current year, forces unemployment status, and rejects cross-year duplicates',
+    () => {
+      const reordered = new Sheet('2027');
+      reordered.rows = [
+        ['name', 'status', 'studentId', 'graduationYear', 'detail', 'phone', 'gender'],
+        ['Existing', '기타', 'S900', '2027', '', '', ''],
+      ];
+      app.sheets.set('2027', reordered);
+      assert.equal(
+        app.call({
+          action: 'saveCurrentStudent',
+          token: adminToken,
+          create: true,
+          student: { student_id: 'C010', name: 'Header Mapped', gender: 'F', phone: '010-0100' },
+        }).ok,
+        true,
+      );
+      const transferred = app.call({
+        action: 'transferCurrentStudent',
+        token: adminToken,
+        studentId: 'C010',
+        graduationYear: '2027',
+        status: '진학자',
+      });
+      assert.equal(transferred.ok, true, transferred.error);
+      const read = app.call({ action: 'students', token: adminToken, year: '2026' });
+      const transferredStudent = read.students.find(student => student.studentId === 'C010');
+      assert.equal(transferredStudent.name, 'Header Mapped');
+      assert.equal(transferredStudent.status, '미취업자');
+      assert.equal(transferredStudent.phone, '010-0100');
+      assert.equal(transferredStudent.gender, 'F');
+      assert.equal(reordered.rows.length, 2, 'client-supplied year sheet remains unchanged');
 
-    assert.equal(app.call({ action: 'saveCurrentStudent', token: adminToken, create: true, student: { student_id: 'C011', name: 'Cross Year Duplicate' } }).ok, true);
-    app.sheets.get('2026').appendRow(['2026', 'C011', 'Existing Duplicate', '', '', '', '기타', '', '', '', '', '']);
-    const duplicateYear = app.call({ action: 'transferCurrentStudent', token: adminToken, studentId: 'C011', graduationYear: '2027', status: '기타' });
-    assert.equal(duplicateYear.ok, false, 'student IDs already present in another year are rejected');
-    assert.match(duplicateYear.error, /C011은 2026년도/);
-    assert.equal(app.call({ action: 'currentStudents', token: adminToken }).students.some(student => student.student_id === 'C011'), true, 'source student remains after cross-year duplicate rejection');
+      assert.equal(
+        app.call({
+          action: 'saveCurrentStudent',
+          token: adminToken,
+          create: true,
+          student: { student_id: 'C011', name: 'Cross Year Duplicate' },
+        }).ok,
+        true,
+      );
+      app.sheets
+        .get('2026')
+        .appendRow(['2026', 'C011', 'Existing Duplicate', '', '', '', '기타', '', '', '', '', '']);
+      const duplicateYear = app.call({
+        action: 'transferCurrentStudent',
+        token: adminToken,
+        studentId: 'C011',
+        graduationYear: '2027',
+        status: '기타',
+      });
+      assert.equal(
+        duplicateYear.ok,
+        false,
+        'student IDs already present in another year are rejected',
+      );
+      assert.match(duplicateYear.error, /C011은 2026년도/);
+      assert.equal(
+        app
+          .call({ action: 'currentStudents', token: adminToken })
+          .students.some(student => student.student_id === 'C011'),
+        true,
+        'source student remains after cross-year duplicate rejection',
+      );
 
-    const repeated = app.call({ action: 'transferCurrentStudent', token: adminToken, studentId: 'C001', graduationYear: '2028', status: '기타' });
-    assert.equal(repeated.ok, true, 'repeat requests remain idempotent even if the client sends a different year');
-    assert.equal(app.sheets.has('2028'), false, 'the client cannot select or create another year');
-    assert.equal(app.sheets.has('졸업생전환'), false, 'no separate graduate transfer sheet is created');
-  });
+      const repeated = app.call({
+        action: 'transferCurrentStudent',
+        token: adminToken,
+        studentId: 'C001',
+        graduationYear: '2028',
+        status: '기타',
+      });
+      assert.equal(
+        repeated.ok,
+        true,
+        'repeat requests remain idempotent even if the client sends a different year',
+      );
+      assert.equal(
+        app.sheets.has('2028'),
+        false,
+        'the client cannot select or create another year',
+      );
+      assert.equal(
+        app.sheets.has('졸업생전환'),
+        false,
+        'no separate graduate transfer sheet is created',
+      );
+    },
+  );
 
   await t.test('reads students and rejects invalid sheet names', () => {
     const result = app.call({ action: 'students', token: adminToken, year: '2025' });
@@ -265,7 +667,22 @@ test('Apps Script API authentication, roles, student lifecycle, statistics, logs
 
   await t.test('returns sheets added after the session was created', () => {
     const addedYear = new Sheet('2026');
-    addedYear.rows = [['graduationYear', 'studentId', 'name', 'gender', 'phone', 'address', 'status', 'company', 'field', 'detail', 'gpa', 'updatedAt']];
+    addedYear.rows = [
+      [
+        'graduationYear',
+        'studentId',
+        'name',
+        'gender',
+        'phone',
+        'address',
+        'status',
+        'company',
+        'field',
+        'detail',
+        'gpa',
+        'updatedAt',
+      ],
+    ];
     app.sheets.set('2026', addedYear);
     const result = app.call({ action: 'sheets', token: adminToken });
     assert.equal(result.ok, true);
@@ -273,18 +690,77 @@ test('Apps Script API authentication, roles, student lifecycle, statistics, logs
   });
 
   await t.test('creates, validates, updates and deletes students', () => {
-    const student = { graduationYear: '2025', studentId: 'S002', name: 'Lee', status: '진학자', gpa: '4.2', company: 'Grad School' };
-    const created = app.call({ action: 'saveStudent', token: adminToken, year: '2025', create: true, student });
+    const student = {
+      graduationYear: '2025',
+      studentId: 'S002',
+      name: 'Lee',
+      status: '진학자',
+      gpa: '4.2',
+      company: 'Grad School',
+    };
+    const created = app.call({
+      action: 'saveStudent',
+      token: adminToken,
+      year: '2025',
+      create: true,
+      student,
+    });
     assert.equal(created.ok, true);
     assert.equal(created.student.updatedAt.length > 0, true);
-    assert.equal(app.call({ action: 'saveStudent', token: adminToken, year: '2025', create: true, student }).ok, false, 'duplicate student IDs are rejected on create');
-    assert.equal(app.call({ action: 'saveStudent', token: adminToken, year: '2025', create: true, student: { ...student, studentId: 'S003', gpa: '5.0' } }).ok, false);
-    assert.equal(app.call({ action: 'saveStudent', token: adminToken, year: '2025', create: true, student: { ...student, studentId: 'S004', status: '미조사자' } }).ok, false, 'removed statuses cannot be newly assigned');
-    assert.equal(app.call({ action: 'saveStudent', token: adminToken, year: '2025', create: true, student: { ...student, studentId: 'S005', status: '국비교육자' } }).ok, false, 'national training is no longer an assignable status');
-    const updated = app.call({ action: 'saveStudent', token: adminToken, year: '2025', create: false, student: { ...student, name: 'Lee Updated' } });
+    assert.equal(
+      app.call({ action: 'saveStudent', token: adminToken, year: '2025', create: true, student })
+        .ok,
+      false,
+      'duplicate student IDs are rejected on create',
+    );
+    assert.equal(
+      app.call({
+        action: 'saveStudent',
+        token: adminToken,
+        year: '2025',
+        create: true,
+        student: { ...student, studentId: 'S003', gpa: '5.0' },
+      }).ok,
+      false,
+    );
+    assert.equal(
+      app.call({
+        action: 'saveStudent',
+        token: adminToken,
+        year: '2025',
+        create: true,
+        student: { ...student, studentId: 'S004', status: '미조사자' },
+      }).ok,
+      false,
+      'removed statuses cannot be newly assigned',
+    );
+    assert.equal(
+      app.call({
+        action: 'saveStudent',
+        token: adminToken,
+        year: '2025',
+        create: true,
+        student: { ...student, studentId: 'S005', status: '국비교육자' },
+      }).ok,
+      false,
+      'national training is no longer an assignable status',
+    );
+    const updated = app.call({
+      action: 'saveStudent',
+      token: adminToken,
+      year: '2025',
+      create: false,
+      student: { ...student, name: 'Lee Updated' },
+    });
     assert.equal(updated.ok, true);
-    assert.equal(app.call({ action: 'deleteStudent', token: adminToken, year: '2025', studentId: 'S002' }).ok, true);
-    assert.equal(app.call({ action: 'deleteStudent', token: adminToken, year: '2025', studentId: 'S002' }).ok, false);
+    assert.equal(
+      app.call({ action: 'deleteStudent', token: adminToken, year: '2025', studentId: 'S002' }).ok,
+      true,
+    );
+    assert.equal(
+      app.call({ action: 'deleteStudent', token: adminToken, year: '2025', studentId: 'S002' }).ok,
+      false,
+    );
   });
 
   await t.test('aggregates statistics and returns newest logs to admins', () => {
@@ -301,99 +777,317 @@ test('Apps Script API authentication, roles, student lifecycle, statistics, logs
   });
 
   await t.test('adds converted graduates to the server current-year sheet', () => {
-    assert.equal(app.call({ action: 'saveCurrentStudent', token: adminToken, create: true, student: { student_id: 'C020', name: '2025 Transfer' } }).ok, true);
-    const result = app.call({ action: 'transferCurrentStudent', token: adminToken, studentId: 'C020', graduationYear: '2025', status: '취업자' });
+    assert.equal(
+      app.call({
+        action: 'saveCurrentStudent',
+        token: adminToken,
+        create: true,
+        student: { student_id: 'C020', name: '2025 Transfer' },
+      }).ok,
+      true,
+    );
+    const result = app.call({
+      action: 'transferCurrentStudent',
+      token: adminToken,
+      studentId: 'C020',
+      graduationYear: '2025',
+      status: '취업자',
+    });
     assert.equal(result.ok, true, result.error);
     assert.equal(result.graduationYear, '2026');
     const graduates = app.call({ action: 'students', token: adminToken, year: '2026' }).students;
     assert.equal(graduates.find(student => student.studentId === 'C020').name, '2025 Transfer');
     assert.equal(graduates.find(student => student.studentId === 'C020').status, '미취업자');
-    assert.equal(app.call({ action: 'currentStudents', token: adminToken }).students.some(student => student.student_id === 'C020'), false);
+    assert.equal(
+      app
+        .call({ action: 'currentStudents', token: adminToken })
+        .students.some(student => student.student_id === 'C020'),
+      false,
+    );
   });
 
-  await t.test('stores counseling separately, scopes by student, sorts newest first and preserves the original author', () => {
-    const student = { graduationYear: '2025', studentId: 'S002', name: 'Lee', status: '미취업자' };
-    assert.equal(app.call({ action: 'saveStudent', token: adminToken, year: '2025', create: true, student }).ok, true);
-    const older = app.call({ action: 'saveCounseling', token: adminToken, year: '2025', studentId: 'S001', counseling: { counseledAt: '2025-02-01T09:00', content: '첫 상담', authorName: 'Spoofed' } });
-    const newer = app.call({ action: 'saveCounseling', token: adminToken, year: '2025', studentId: 'S001', counseling: { counseledAt: '2025-03-01T09:00', content: '두 번째 상담' } });
-    assert.equal(older.ok, true, older.error);
-    assert.equal(newer.ok, true, newer.error);
-    assert.equal(older.counseling.authorName, 'Admin User', 'author comes from the authenticated session');
-    assert.ok(older.counseling.createdAt);
-    assert.ok(older.counseling.updatedAt);
-    const list = app.call({ action: 'counselings', token: adminToken, year: '2025', studentId: 'S001' });
-    assert.deepEqual(list.counselings.map(item => item.content), ['두 번째 상담', '첫 상담']);
-    assert.equal(app.call({ action: 'counselings', token: adminToken, year: '2025', studentId: 'S002' }).counselings.length, 0);
-    const revised = app.call({ action: 'saveCounseling', token: adminToken, year: '2025', studentId: 'S001', counseling: { counselingId: older.counseling.counselingId, counseledAt: older.counseling.counseledAt, content: '수정된 상담', authorName: 'Changed' } });
-    assert.equal(revised.ok, true, revised.error);
-    assert.equal(revised.counseling.content, '수정된 상담');
-    assert.equal(revised.counseling.authorName, 'Admin User');
-    assert.equal(app.call({ action: 'deleteCounseling', token: adminToken, year: '2025', studentId: 'S001', counselingId: newer.counseling.counselingId }).ok, true);
-    assert.equal(app.call({ action: 'counselings', token: adminToken, year: '2025', studentId: 'S001' }).counselings.length, 1);
-    const originalAudit = app.call({ action: 'logs', token: adminToken }).logs;
-    assert.ok(originalAudit.some(log => log.action === '학생 등록'), 'the existing audit log sheet is retained');
-    assert.ok(originalAudit.some(log => log.action === '상담 기록 수정'));
-    assert.equal(app.call({ action: 'counselings', token: adminToken, year: '2025', studentId: 'missing' }).ok, false);
-    app.setGoogleProfile({ email: 'legacy@example.com', email_verified: true, aud: 'test-client' });
-    const userLogin = app.call({ action: 'googleLogin', accessToken: 'mock-token' });
-    const userRecord = app.call({ action: 'saveCounseling', token: userLogin.token, year: '2025', studentId: 'S002', counseling: { counseledAt: '2025-04-01T10:00', content: '일반 사용자 상담' } });
-    assert.equal(userRecord.ok, true, userRecord.error);
-    assert.equal(userRecord.counseling.authorName, 'Legacy User');
-  });
+  await t.test(
+    'stores counseling separately, scopes by student, sorts newest first and preserves the original author',
+    () => {
+      const student = {
+        graduationYear: '2025',
+        studentId: 'S002',
+        name: 'Lee',
+        status: '미취업자',
+      };
+      assert.equal(
+        app.call({ action: 'saveStudent', token: adminToken, year: '2025', create: true, student })
+          .ok,
+        true,
+      );
+      const older = app.call({
+        action: 'saveCounseling',
+        token: adminToken,
+        year: '2025',
+        studentId: 'S001',
+        counseling: { counseledAt: '2025-02-01T09:00', content: '첫 상담', authorName: 'Spoofed' },
+      });
+      const newer = app.call({
+        action: 'saveCounseling',
+        token: adminToken,
+        year: '2025',
+        studentId: 'S001',
+        counseling: { counseledAt: '2025-03-01T09:00', content: '두 번째 상담' },
+      });
+      assert.equal(older.ok, true, older.error);
+      assert.equal(newer.ok, true, newer.error);
+      assert.equal(
+        older.counseling.authorName,
+        'Admin User',
+        'author comes from the authenticated session',
+      );
+      assert.ok(older.counseling.createdAt);
+      assert.ok(older.counseling.updatedAt);
+      const list = app.call({
+        action: 'counselings',
+        token: adminToken,
+        year: '2025',
+        studentId: 'S001',
+      });
+      assert.deepEqual(
+        list.counselings.map(item => item.content),
+        ['두 번째 상담', '첫 상담'],
+      );
+      assert.equal(
+        app.call({ action: 'counselings', token: adminToken, year: '2025', studentId: 'S002' })
+          .counselings.length,
+        0,
+      );
+      const revised = app.call({
+        action: 'saveCounseling',
+        token: adminToken,
+        year: '2025',
+        studentId: 'S001',
+        counseling: {
+          counselingId: older.counseling.counselingId,
+          counseledAt: older.counseling.counseledAt,
+          content: '수정된 상담',
+          authorName: 'Changed',
+        },
+      });
+      assert.equal(revised.ok, true, revised.error);
+      assert.equal(revised.counseling.content, '수정된 상담');
+      assert.equal(revised.counseling.authorName, 'Admin User');
+      assert.equal(
+        app.call({
+          action: 'deleteCounseling',
+          token: adminToken,
+          year: '2025',
+          studentId: 'S001',
+          counselingId: newer.counseling.counselingId,
+        }).ok,
+        true,
+      );
+      assert.equal(
+        app.call({ action: 'counselings', token: adminToken, year: '2025', studentId: 'S001' })
+          .counselings.length,
+        1,
+      );
+      const originalAudit = app.call({ action: 'logs', token: adminToken }).logs;
+      assert.ok(
+        originalAudit.some(log => log.action === '학생 등록'),
+        'the existing audit log sheet is retained',
+      );
+      assert.ok(originalAudit.some(log => log.action === '상담 기록 수정'));
+      assert.equal(
+        app.call({ action: 'counselings', token: adminToken, year: '2025', studentId: 'missing' })
+          .ok,
+        false,
+      );
+      app.setGoogleProfile({
+        email: 'legacy@example.com',
+        email_verified: true,
+        aud: 'test-client',
+      });
+      const userLogin = app.call({ action: 'googleLogin', accessToken: 'mock-token' });
+      const userRecord = app.call({
+        action: 'saveCounseling',
+        token: userLogin.token,
+        year: '2025',
+        studentId: 'S002',
+        counseling: { counseledAt: '2025-04-01T10:00', content: '일반 사용자 상담' },
+      });
+      assert.equal(userRecord.ok, true, userRecord.error);
+      assert.equal(userRecord.counseling.authorName, 'Legacy User');
+    },
+  );
 
-  await t.test('stores personal schedules in configured sheets and enforces owner permissions', () => {
-    const categories = new Sheet('스케줄설정');
-    categories.rows = [
-      '카테고리ID, 카테고리명, 색상코드, 사용여부, 정렬순서'.split(', '),
-      ['personal', '개인', '#8B5CF6', true, 1],
-      ['work', '업무', '#2563EB', true, 2],
-    ];
-    const schedules = new Sheet('스케줄');
-    schedules.rows = ['일정ID, 사용자ID, 작성자명, 일정제목, 카테고리ID, 시작일시, 종료일시, 종일여부, 장소, 상세설명, 반복유형, 반복간격, 반복종료일, 등록일시, 수정일시'.split(', ')];
-    app.sheets.set(categories.name, categories);
-    app.sheets.set(schedules.name, schedules);
-    assert.equal(app.call({ action: 'sheets', token: adminToken }).sheets.includes('스케줄'), false, 'calendar tabs are not exposed as graduation-year sheets');
-    assert.equal(app.call({ action: 'scheduleCategories', token: adminToken }).categories.length, 2);
-    const saved = app.call({ action: 'saveSchedule', token: adminToken, schedule: {
-      title: '개인 일정', category_id: 'personal', start_datetime: '2026-10-06T09:00:00+09:00', end_datetime: '2026-10-06T10:00:00+09:00',
-      all_day: false, location: '서울', description: '내용', repeat_type: 'weekly', repeat_interval: 1, repeat_until: '2026-10-27', user_id: 'spoof', user_name: 'Spoof',
-    } });
-    assert.equal(saved.ok, true, saved.error);
-    assert.equal(saved.schedule.user_id, 'admin', 'owner comes from the authenticated session');
-    assert.equal(saved.schedule.user_name, 'Admin User');
-    assert.ok(saved.schedule.created_at);
-    const visible = app.call({ action: 'schedules', token: adminToken, fromDate: '2026-10-01', toDate: '2026-10-31' });
-    assert.equal(visible.schedules.length, 1);
-    assert.equal(visible.schedules[0].repeat_type, 'weekly');
-    const updated = app.call({ action: 'saveSchedule', token: adminToken, schedule: { ...saved.schedule, title: '수정한 일정' } });
-    assert.equal(updated.ok, true, updated.error);
-    assert.equal(schedules.rows.length, 2, 'an edit updates the existing row instead of duplicating it');
-    assert.equal(updated.schedule.created_at, saved.schedule.created_at);
-    schedules.appendRow(['owned-by-other', 'someone-else', 'Other User', '비공개 일정', 'personal', '2026-10-06T09:00:00+09:00', '2026-10-06T10:00:00+09:00', false, '', '', 'none', 1, '', '2026-01-01 00:00:00', '2026-01-01 00:00:00']);
-    assert.equal(app.call({ action: 'schedules', token: adminToken, fromDate: '2026-10-01', toDate: '2026-10-31' }).schedules.length, 1, 'other users schedules are not returned');
-    assert.equal(app.call({ action: 'saveSchedule', token: adminToken, schedule: { ...saved.schedule, schedule_id: 'owned-by-other' } }).ok, false);
-    assert.equal(app.call({ action: 'deleteSchedule', token: adminToken, schedule_id: 'owned-by-other' }).ok, false);
-    assert.equal(app.call({ action: 'saveSchedule', token: adminToken, schedule: { ...saved.schedule, schedule_id: '', start_datetime: '2026-10-06T11:00:00+09:00', end_datetime: '2026-10-06T10:00:00+09:00' } }).ok, false, 'end-before-start is rejected');
-    assert.equal(app.call({ action: 'deleteSchedule', token: adminToken, schedule_id: saved.schedule.schedule_id }).ok, true);
-    assert.equal(schedules.rows.length, 2, 'deleting own event leaves other users rows untouched');
-  });
+  await t.test(
+    'stores personal schedules in configured sheets and enforces owner permissions',
+    () => {
+      const categories = new Sheet('스케줄설정');
+      categories.rows = [
+        '카테고리ID, 카테고리명, 색상코드, 사용여부, 정렬순서'.split(', '),
+        ['personal', '개인', '#8B5CF6', true, 1],
+        ['work', '업무', '#2563EB', true, 2],
+      ];
+      const schedules = new Sheet('스케줄');
+      schedules.rows = [
+        '일정ID, 사용자ID, 작성자명, 일정제목, 카테고리ID, 시작일시, 종료일시, 종일여부, 장소, 상세설명, 반복유형, 반복간격, 반복종료일, 등록일시, 수정일시'.split(
+          ', ',
+        ),
+      ];
+      app.sheets.set(categories.name, categories);
+      app.sheets.set(schedules.name, schedules);
+      assert.equal(
+        app.call({ action: 'sheets', token: adminToken }).sheets.includes('스케줄'),
+        false,
+        'calendar tabs are not exposed as graduation-year sheets',
+      );
+      assert.equal(
+        app.call({ action: 'scheduleCategories', token: adminToken }).categories.length,
+        2,
+      );
+      const saved = app.call({
+        action: 'saveSchedule',
+        token: adminToken,
+        schedule: {
+          title: '개인 일정',
+          category_id: 'personal',
+          start_datetime: '2026-10-06T09:00:00+09:00',
+          end_datetime: '2026-10-06T10:00:00+09:00',
+          all_day: false,
+          location: '서울',
+          description: '내용',
+          repeat_type: 'weekly',
+          repeat_interval: 1,
+          repeat_until: '2026-10-27',
+          user_id: 'spoof',
+          user_name: 'Spoof',
+        },
+      });
+      assert.equal(saved.ok, true, saved.error);
+      assert.equal(saved.schedule.user_id, 'admin', 'owner comes from the authenticated session');
+      assert.equal(saved.schedule.user_name, 'Admin User');
+      assert.ok(saved.schedule.created_at);
+      const visible = app.call({
+        action: 'schedules',
+        token: adminToken,
+        fromDate: '2026-10-01',
+        toDate: '2026-10-31',
+      });
+      assert.equal(visible.schedules.length, 1);
+      assert.equal(visible.schedules[0].repeat_type, 'weekly');
+      const updated = app.call({
+        action: 'saveSchedule',
+        token: adminToken,
+        schedule: { ...saved.schedule, title: '수정한 일정' },
+      });
+      assert.equal(updated.ok, true, updated.error);
+      assert.equal(
+        schedules.rows.length,
+        2,
+        'an edit updates the existing row instead of duplicating it',
+      );
+      assert.equal(updated.schedule.created_at, saved.schedule.created_at);
+      schedules.appendRow([
+        'owned-by-other',
+        'someone-else',
+        'Other User',
+        '비공개 일정',
+        'personal',
+        '2026-10-06T09:00:00+09:00',
+        '2026-10-06T10:00:00+09:00',
+        false,
+        '',
+        '',
+        'none',
+        1,
+        '',
+        '2026-01-01 00:00:00',
+        '2026-01-01 00:00:00',
+      ]);
+      assert.equal(
+        app.call({
+          action: 'schedules',
+          token: adminToken,
+          fromDate: '2026-10-01',
+          toDate: '2026-10-31',
+        }).schedules.length,
+        1,
+        'other users schedules are not returned',
+      );
+      assert.equal(
+        app.call({
+          action: 'saveSchedule',
+          token: adminToken,
+          schedule: { ...saved.schedule, schedule_id: 'owned-by-other' },
+        }).ok,
+        false,
+      );
+      assert.equal(
+        app.call({ action: 'deleteSchedule', token: adminToken, schedule_id: 'owned-by-other' }).ok,
+        false,
+      );
+      assert.equal(
+        app.call({
+          action: 'saveSchedule',
+          token: adminToken,
+          schedule: {
+            ...saved.schedule,
+            schedule_id: '',
+            start_datetime: '2026-10-06T11:00:00+09:00',
+            end_datetime: '2026-10-06T10:00:00+09:00',
+          },
+        }).ok,
+        false,
+        'end-before-start is rejected',
+      );
+      assert.equal(
+        app.call({
+          action: 'deleteSchedule',
+          token: adminToken,
+          schedule_id: saved.schedule.schedule_id,
+        }).ok,
+        true,
+      );
+      assert.equal(
+        schedules.rows.length,
+        2,
+        'deleting own event leaves other users rows untouched',
+      );
+    },
+  );
 
   await t.test('administrator can create users and changed credentials invalidate sessions', () => {
-    const user = { userId: 'newuser', name: 'New User', email: 'newuser@example.com', role: 'user', active: true };
+    const user = {
+      userId: 'newuser',
+      name: 'New User',
+      email: 'newuser@example.com',
+      role: 'user',
+      active: true,
+    };
     const saved = app.call({ action: 'saveUser', token: adminToken, user });
     assert.equal(saved.ok, true);
     app.setGoogleProfile({ email: user.email, email_verified: true, aud: 'test-client' });
     const login = app.call({ action: 'googleLogin', accessToken: 'mock-token' });
     assert.equal(login.ok, true);
     app.setGoogleProfile({ email: 'admin@example.com', email_verified: true, aud: 'test-client' });
-    assert.equal(app.call({ action: 'saveUser', token: adminToken, user: { ...user, name: 'New Name' } }).ok, true);
-    assert.match(app.call({ action: 'students', token: login.token, year: '2025' }).error, /비활성화|권한/);
+    assert.equal(
+      app.call({ action: 'saveUser', token: adminToken, user: { ...user, name: 'New Name' } }).ok,
+      true,
+    );
+    assert.match(
+      app.call({ action: 'students', token: login.token, year: '2025' }).error,
+      /비활성화|권한/,
+    );
     app.setGoogleProfile({ email: user.email, email_verified: true, aud: 'test-client' });
     const updatedLogin = app.call({ action: 'googleLogin', accessToken: 'mock-token' });
     assert.equal(updatedLogin.ok, true);
     app.setGoogleProfile({ email: 'admin@example.com', email_verified: true, aud: 'test-client' });
-    assert.equal(app.call({ action: 'saveUser', token: adminToken, user: { ...user, active: false } }).ok, true);
-    assert.match(app.call({ action: 'students', token: updatedLogin.token, year: '2025' }).error, /비활성화|권한/);
+    assert.equal(
+      app.call({ action: 'saveUser', token: adminToken, user: { ...user, active: false } }).ok,
+      true,
+    );
+    assert.match(
+      app.call({ action: 'students', token: updatedLogin.token, year: '2025' }).error,
+      /비활성화|권한/,
+    );
   });
 
   await t.test('logout revokes the session and local password login is disabled', () => {
@@ -402,7 +1096,10 @@ test('Apps Script API authentication, roles, student lifecycle, statistics, logs
     assert.equal(fresh.ok, true);
     assert.equal(app.call({ action: 'logout', token: fresh.token }).ok, true);
     assert.equal(app.call({ action: 'statistics', token: fresh.token }).ok, false);
-    assert.equal(app.call({ action: 'login', userId: 'admin', password: 'strong-admin-password' }).ok, false);
+    assert.equal(
+      app.call({ action: 'login', userId: 'admin', password: 'strong-admin-password' }).ok,
+      false,
+    );
   });
 });
 
@@ -410,16 +1107,31 @@ test('graduate transfer creates only the server current-year tab from the latest
   const app = makeHarness();
   const login = app.call({ action: 'googleLogin', accessToken: 'mock-token' });
   const templateHeaders = [...app.sheets.get('2025').rows[0]];
-  const result = app.call({ action: 'transferCurrentStudent', token: login.token, studentId: 'C001', graduationYear: '2099', status: '취업자' });
+  const result = app.call({
+    action: 'transferCurrentStudent',
+    token: login.token,
+    studentId: 'C001',
+    graduationYear: '2099',
+    status: '취업자',
+  });
   assert.equal(result.ok, true, result.error);
   assert.equal(result.graduationYear, '2026');
   const target = app.sheets.get('2026');
   assert.deepEqual(target.rows[0], templateHeaders);
-  assert.equal(target.rows.length, 2, 'the template graduate row was cleared before adding the current student');
+  assert.equal(
+    target.rows.length,
+    2,
+    'the template graduate row was cleared before adding the current student',
+  );
   assert.equal(target.rows[1][1], 'C001');
   assert.equal(target.rows[1][6], '미취업자');
   assert.equal(app.sheets.get('2025').rows.length, 2, 'the template year remains unchanged');
-  assert.equal(app.call({ action: 'currentStudents', token: login.token }).students.some(student => student.student_id === 'C001'), false);
+  assert.equal(
+    app
+      .call({ action: 'currentStudents', token: login.token })
+      .students.some(student => student.student_id === 'C001'),
+    false,
+  );
   assert.equal(app.sheets.has('졸업생전환'), false);
 });
 
@@ -427,16 +1139,37 @@ test('graduate transfer uses the canonical schema if no annual template exists',
   const app = makeHarness();
   const login = app.call({ action: 'googleLogin', accessToken: 'mock-token' });
   app.sheets.delete('2025');
-  const result = app.call({ action: 'transferCurrentStudent', token: login.token, studentId: 'C001' });
+  const result = app.call({
+    action: 'transferCurrentStudent',
+    token: login.token,
+    studentId: 'C001',
+  });
   assert.equal(result.ok, true, result.error);
-  assert.deepEqual(app.sheets.get('2026').rows[0], ['graduationYear', 'studentId', 'name', 'gender', 'phone', 'address', 'status', 'company', 'field', 'detail', 'gpa', 'updatedAt']);
+  assert.deepEqual(app.sheets.get('2026').rows[0], [
+    'graduationYear',
+    'studentId',
+    'name',
+    'gender',
+    'phone',
+    'address',
+    'status',
+    'company',
+    'field',
+    'detail',
+    'gpa',
+    'updatedAt',
+  ]);
 });
 
 test('graduate transfer follows the server year when the calendar year changes', () => {
   const app = makeHarness();
   const login = app.call({ action: 'googleLogin', accessToken: 'mock-token' });
   app.setCurrentYear('2027');
-  const result = app.call({ action: 'transferCurrentStudent', token: login.token, studentId: 'C001' });
+  const result = app.call({
+    action: 'transferCurrentStudent',
+    token: login.token,
+    studentId: 'C001',
+  });
   assert.equal(result.ok, true, result.error);
   assert.equal(result.graduationYear, '2027');
   assert.equal(app.sheets.get('2027').rows[1][0], '2027');
@@ -445,7 +1178,11 @@ test('graduate transfer follows the server year when the calendar year changes',
 test('archive posts are visible to authenticated users and write operations are admin-only', () => {
   const app = makeHarness();
   const admin = app.call({ action: 'googleLogin', accessToken: 'mock-token' });
-  const created = app.call({ action: 'saveArchivePost', token: admin.token, post: { title: '  자료 안내  ', content: '첫 줄\n둘째 줄' } });
+  const created = app.call({
+    action: 'saveArchivePost',
+    token: admin.token,
+    post: { title: '  자료 안내  ', content: '첫 줄\n둘째 줄' },
+  });
   assert.equal(created.ok, true, created.error);
   assert.ok(app.sheets.has('archive_posts'));
   assert.ok(app.sheets.has('archive_files'));
@@ -453,14 +1190,37 @@ test('archive posts are visible to authenticated users and write operations are 
   assert.equal(posts.posts[0].title, '자료 안내');
   assert.equal(posts.posts[0].content, '첫 줄\n둘째 줄');
   assert.equal(posts.posts[0].authorName, 'Admin User');
-  assert.equal(app.call({ action: 'archivePostView', token: admin.token, postId: created.postId }).viewCount, 1);
-  assert.equal(app.call({ action: 'saveArchivePost', token: admin.token, post: { postId: created.postId, title: '수정됨', content: '' } }).ok, true);
+  assert.equal(
+    app.call({ action: 'archivePostView', token: admin.token, postId: created.postId }).viewCount,
+    1,
+  );
+  assert.equal(
+    app.call({
+      action: 'saveArchivePost',
+      token: admin.token,
+      post: { postId: created.postId, title: '수정됨', content: '' },
+    }).ok,
+    true,
+  );
 
   app.setGoogleProfile({ email: 'legacy@example.com', email_verified: true, aud: 'test-client' });
   const user = app.call({ action: 'googleLogin', accessToken: 'mock-token' });
   assert.equal(app.call({ action: 'archivePosts', token: user.token }).posts[0].title, '수정됨');
-  assert.equal(app.call({ action: 'saveArchivePost', token: user.token, post: { title: '권한 우회', content: '' } }).ok, false);
-  assert.equal(app.call({ action: 'deleteArchivePost', token: user.token, postId: created.postId }).ok, false);
-  assert.equal(app.call({ action: 'deleteArchivePost', token: admin.token, postId: created.postId }).ok, true);
+  assert.equal(
+    app.call({
+      action: 'saveArchivePost',
+      token: user.token,
+      post: { title: '권한 우회', content: '' },
+    }).ok,
+    false,
+  );
+  assert.equal(
+    app.call({ action: 'deleteArchivePost', token: user.token, postId: created.postId }).ok,
+    false,
+  );
+  assert.equal(
+    app.call({ action: 'deleteArchivePost', token: admin.token, postId: created.postId }).ok,
+    true,
+  );
   assert.equal(app.call({ action: 'archivePosts', token: admin.token }).posts.length, 0);
 });

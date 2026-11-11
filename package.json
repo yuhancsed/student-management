@@ -7,13 +7,17 @@
     "dev": "vite",
     "build": "vite build --base=./",
     "preview": "vite preview",
-    "test": "node test/run.js"
+    "test": "node test/run.js",
+    "format": "prettier --write --ignore-path .prettierignore \"src/**/*.{js,jsx}\" \"test/**/*.js\" \"cloudflare-worker/src/**/*.js\" && prettier --write --ignore-path .prettierignore --parser babel \"apps-script/**/*.gs\"",
+    "format:check": "prettier --check --ignore-path .prettierignore \"src/**/*.{js,jsx}\" \"test/**/*.js\" \"cloudflare-worker/src/**/*.js\" && prettier --check --ignore-path .prettierignore --parser babel \"apps-script/**/*.gs\""
   },
   "dependencies": {
-    "vite": "latest",
+    "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "lucide-react": "latest"
+    "vite": "latest"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "prettier": "^3.9.10"
+  }
 }

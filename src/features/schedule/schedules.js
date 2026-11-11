@@ -37,7 +37,8 @@ export function expandScheduleInstances(schedule, rangeStart, rangeEnd) {
   const occurrences = [];
 
   if (repeatType === 'none') {
-    if (startMs <= to && endMs >= from) occurrences.push(makeOccurrence(schedule, baseStart, baseEnd));
+    if (startMs <= to && endMs >= from)
+      occurrences.push(makeOccurrence(schedule, baseStart, baseEnd));
     return occurrences;
   }
 
@@ -48,11 +49,21 @@ export function expandScheduleInstances(schedule, rangeStart, rangeEnd) {
     const diffDays = Math.floor((candidateMs - startMs) / DAY_MS);
     let matches = false;
     if (repeatType === 'daily') matches = diffDays % interval === 0;
-    if (repeatType === 'weekly') matches = candidate.getUTCDay() === base.getUTCDay() && Math.floor(diffDays / 7) % interval === 0;
+    if (repeatType === 'weekly')
+      matches =
+        candidate.getUTCDay() === base.getUTCDay() && Math.floor(diffDays / 7) % interval === 0;
     if (repeatType === 'monthly') {
-      const monthDiff = (candidate.getUTCFullYear() - base.getUTCFullYear()) * 12 + candidate.getUTCMonth() - base.getUTCMonth();
-      const lastDay = new Date(Date.UTC(candidate.getUTCFullYear(), candidate.getUTCMonth() + 1, 0)).getUTCDate();
-      matches = monthDiff >= 0 && monthDiff % interval === 0 && candidate.getUTCDate() === Math.min(base.getUTCDate(), lastDay);
+      const monthDiff =
+        (candidate.getUTCFullYear() - base.getUTCFullYear()) * 12 +
+        candidate.getUTCMonth() -
+        base.getUTCMonth();
+      const lastDay = new Date(
+        Date.UTC(candidate.getUTCFullYear(), candidate.getUTCMonth() + 1, 0),
+      ).getUTCDate();
+      matches =
+        monthDiff >= 0 &&
+        monthDiff % interval === 0 &&
+        candidate.getUTCDate() === Math.min(base.getUTCDate(), lastDay);
     }
     const candidateKey = dateKey(candidate);
     if (!matches || (repeatUntil && candidateKey > repeatUntil)) continue;
@@ -79,7 +90,11 @@ export function buildDateEventMap(schedules, rangeStart, rangeEnd) {
       }
     });
   });
-  Object.values(map).forEach(items => items.sort((a, b) => a.start_datetime.localeCompare(b.start_datetime) || a.title.localeCompare(b.title)));
+  Object.values(map).forEach(items =>
+    items.sort(
+      (a, b) => a.start_datetime.localeCompare(b.start_datetime) || a.title.localeCompare(b.title),
+    ),
+  );
   return map;
 }
 
@@ -90,17 +105,28 @@ export function buildWeekEventSegments(dateMap, gridDates) {
     const firstDay = dateKey(days[0]);
     const lastDay = dateKey(days[days.length - 1]);
     const events = new Map();
-    days.forEach(day => (dateMap[dateKey(day)] || []).forEach(event => {
-      if (event.occurrence_start_date < event.occurrence_end_date) events.set(`${event.schedule_id}:${event.occurrence_start_date}`, event);
-    }));
+    days.forEach(day =>
+      (dateMap[dateKey(day)] || []).forEach(event => {
+        if (event.occurrence_start_date < event.occurrence_end_date)
+          events.set(`${event.schedule_id}:${event.occurrence_start_date}`, event);
+      }),
+    );
 
-    const segments = [...events.values()].filter(event => event.occurrence_start_date <= lastDay && event.occurrence_end_date >= firstDay)
+    const segments = [...events.values()]
+      .filter(
+        event => event.occurrence_start_date <= lastDay && event.occurrence_end_date >= firstDay,
+      )
       .map(event => ({
         event,
         start: event.occurrence_start_date < firstDay ? firstDay : event.occurrence_start_date,
         end: event.occurrence_end_date > lastDay ? lastDay : event.occurrence_end_date,
       }))
-      .sort((a, b) => a.start.localeCompare(b.start) || b.end.localeCompare(a.end) || a.event.title.localeCompare(b.event.title));
+      .sort(
+        (a, b) =>
+          a.start.localeCompare(b.start) ||
+          b.end.localeCompare(a.end) ||
+          a.event.title.localeCompare(b.event.title),
+      );
 
     const laneEnds = [];
     segments.forEach(segment => {

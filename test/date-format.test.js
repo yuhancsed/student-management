@@ -13,7 +13,10 @@ import {
 test('formats legacy mixed-language timestamps in Seoul time and 24-hour format', () => {
   const legacy = 'Wed Oct 07 2026 11:08:05 GMT+0900 (韓國標準時間)';
   assert.equal(formatKoreanDateTime(legacy), '2026.10.07(수) 11:08:05');
-  assert.equal(formatKoreanDateTime(legacy.replace('11:08:05', '23:08:05')), '2026.10.07(수) 23:08:05');
+  assert.equal(
+    formatKoreanDateTime(legacy.replace('11:08:05', '23:08:05')),
+    '2026.10.07(수) 23:08:05',
+  );
 });
 
 test('formats date-only values without adding a time and validates calendar dates', () => {
@@ -36,6 +39,10 @@ test('parses ISO and Seoul-local timestamps while preserving the civil date', ()
 });
 
 test('formats only recognized date fields in existing transfer details', () => {
-  const detail = '[재학생 전환 시 보존 정보]\n생년월일: 20210709\n이메일: ksw04180\n재학생 최초 등록일: Wed Oct 07 2026 11:08:05 GMT+0900 (韓國標準時間)\n참고사항: 원본 날짜 문자열 유지';
-  assert.equal(formatTransferDetailForDisplay(detail), '[재학생 전환 시 보존 정보]\n생년월일: 2021.07.09(금)\n이메일: ksw04180\n재학생 최초 등록일: 2026.10.07(수) 11:08:05\n참고사항: 원본 날짜 문자열 유지');
+  const detail =
+    '[재학생 전환 시 보존 정보]\n생년월일: 20210709\n이메일: ksw04180\n재학생 최초 등록일: Wed Oct 07 2026 11:08:05 GMT+0900 (韓國標準時間)\n참고사항: 원본 날짜 문자열 유지';
+  assert.equal(
+    formatTransferDetailForDisplay(detail),
+    '[재학생 전환 시 보존 정보]\n생년월일: 2021.07.09(금)\n이메일: ksw04180\n재학생 최초 등록일: 2026.10.07(수) 11:08:05\n참고사항: 원본 날짜 문자열 유지',
+  );
 });

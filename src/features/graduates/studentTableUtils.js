@@ -1,12 +1,24 @@
 const koNumericCollator = new Intl.Collator('ko', { numeric: true, sensitivity: 'base' });
 
 export function filterStudentRows(rows, { status = '전체학생', query = '' } = {}) {
-  const search = String(query || '').trim().toLocaleLowerCase('ko-KR');
+  const search = String(query || '')
+    .trim()
+    .toLocaleLowerCase('ko-KR');
   return rows.filter(student => {
     if (status !== '전체학생' && student?.status !== status) return false;
     if (!search) return true;
-    return [student?.name, student?.studentId, student?.company, student?.field, student?.phone, student?.address]
-      .some(value => String(value ?? '').toLocaleLowerCase('ko-KR').includes(search));
+    return [
+      student?.name,
+      student?.studentId,
+      student?.company,
+      student?.field,
+      student?.phone,
+      student?.address,
+    ].some(value =>
+      String(value ?? '')
+        .toLocaleLowerCase('ko-KR')
+        .includes(search),
+    );
   });
 }
 
